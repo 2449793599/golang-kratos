@@ -6,6 +6,7 @@ import (
 	"sort"
 )
 
+// *********************************************************************************************************************
 // Registrar is service registrar.
 type Registrar interface {
 	// Register the registration.
@@ -17,7 +18,7 @@ type Registrar interface {
 // Discovery is service discovery.
 type Discovery interface {
 	// GetService return the service instances in memory according to the service name.
-	GetService(ctx context.Context, serviceName string) ([]*ServiceInstance, error)
+	GetService(ctx context.Context, serviceName string) ([]*ServiceInstance, error) // 内存？？？
 	// Watch creates a watcher according to the service name.
 	Watch(ctx context.Context, serviceName string) (Watcher, error)
 }
@@ -33,6 +34,7 @@ type Watcher interface {
 	Stop() error
 }
 
+// *********************************************************************************************************************
 // ServiceInstance is an instance of a service in a discovery system.
 type ServiceInstance struct {
 	// ID is the unique instance ID as registered.
@@ -56,6 +58,7 @@ func (i *ServiceInstance) String() string {
 
 // Equal returns whether i and o are equivalent.
 func (i *ServiceInstance) Equal(o any) bool {
+
 	if i == nil && o == nil {
 		return true
 	}
@@ -65,6 +68,7 @@ func (i *ServiceInstance) Equal(o any) bool {
 	}
 
 	t, ok := o.(*ServiceInstance)
+
 	if !ok {
 		return false
 	}
@@ -75,6 +79,7 @@ func (i *ServiceInstance) Equal(o any) bool {
 
 	sort.Strings(i.Endpoints)
 	sort.Strings(t.Endpoints)
+
 	for j := 0; j < len(i.Endpoints); j++ {
 		if i.Endpoints[j] != t.Endpoints[j] {
 			return false
@@ -92,4 +97,5 @@ func (i *ServiceInstance) Equal(o any) bool {
 	}
 
 	return i.ID == t.ID && i.Name == t.Name && i.Version == t.Version
+
 }

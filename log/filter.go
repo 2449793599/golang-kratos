@@ -3,8 +3,9 @@ package log
 // FilterOption is filter option.
 type FilterOption func(*Filter)
 
-const fuzzyStr = "***"
+const fuzzyStr = "***" // 模糊字符串
 
+// *********************************************************************************************************************
 // FilterLevel with filter level.
 func FilterLevel(level Level) FilterOption {
 	return func(opts *Filter) {
@@ -37,9 +38,10 @@ func FilterFunc(f func(level Level, keyvals ...any) bool) FilterOption {
 	}
 }
 
+// *********************************************************************************************************************
 // Filter is a logger filter.
 type Filter struct {
-	logger Logger
+	logger Logger // 底层实现 -- 日志器
 	level  Level
 	key    map[any]struct{}
 	value  map[any]struct{}
@@ -48,47 +50,64 @@ type Filter struct {
 
 // NewFilter new a logger filter.
 func NewFilter(logger Logger, opts ...FilterOption) *Filter {
+
 	options := Filter{
 		logger: logger,
 		key:    make(map[any]struct{}),
 		value:  make(map[any]struct{}),
 	}
+
 	for _, o := range opts {
 		o(&options)
 	}
+
 	return &options
+
 }
 
 // Log Print log by level and keyvals.
 func (f *Filter) Log(level Level, keyvals ...any) error {
+
 	if level < f.level {
 		return nil
 	}
+
 	// prefixkv contains the slice of arguments defined as prefixes during the log initialization
 	var prefixkv []any
+
 	l, ok := f.logger.(*logger)
+
 	if ok && len(l.prefix) > 0 {
 		prefixkv = make([]any, 0, len(l.prefix))
 		prefixkv = append(prefixkv, l.prefix...)
 	}
 
-	if f.filter != nil && (f.filter(level, prefixkv...) || f.filter(level, keyvals...)) {
+	if f.filter != nil && (f.filter(level, prefixkv...) || f.filter(level, keyvals...)) { // 过滤掉了（根据指定KV值过滤）
 		return nil
 	}
 
 	if len(f.key) > 0 || len(f.value) > 0 {
+
 		for i := 0; i < len(keyvals); i += 2 {
+
 			v := i + 1
+
 			if v >= len(keyvals) {
 				continue
 			}
-			if _, ok := f.key[keyvals[i]]; ok {
+			if _, ok := f.key[keyvals[i]]; ok { // 模糊处理
 				keyvals[v] = fuzzyStr
 			}
-			if _, ok := f.value[keyvals[v]]; ok {
+			if _, ok := f.value[keyvals[v]]; ok { // 模糊处理
 				keyvals[v] = fuzzyStr
 			}
+
 		}
+
 	}
+
 	return f.logger.Log(level, keyvals...)
+
 }
+
+// *********************************************************************************************************************

@@ -7,13 +7,13 @@ import (
 	"sync"
 )
 
-var _ Logger = (*stdLogger)(nil)
+var _ Logger = (*stdLogger)(nil) // 确保实现了接口
 
 // stdLogger corresponds to the standard library's [log.Logger] and provides
 // similar capabilities. It also can be used concurrently by multiple goroutines.
 type stdLogger struct {
 	w         io.Writer
-	isDiscard bool
+	isDiscard bool // 是否丢弃日志
 	mu        sync.Mutex
 	pool      *sync.Pool
 }
@@ -33,9 +33,11 @@ func NewStdLogger(w io.Writer) Logger {
 
 // Log print the kv pairs log.
 func (l *stdLogger) Log(level Level, keyvals ...any) error {
+
 	if l.isDiscard || len(keyvals) == 0 {
 		return nil
 	}
+
 	if (len(keyvals) & 1) == 1 {
 		keyvals = append(keyvals, "KEYVALS UNPAIRED")
 	}
@@ -44,16 +46,22 @@ func (l *stdLogger) Log(level Level, keyvals ...any) error {
 	defer l.pool.Put(buf)
 
 	buf.WriteString(level.String())
+
 	for i := 0; i < len(keyvals); i += 2 {
 		_, _ = fmt.Fprintf(buf, " %s=%v", keyvals[i], keyvals[i+1])
 	}
+
 	buf.WriteByte('\n')
+
 	defer buf.Reset()
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
+
 	_, err := l.w.Write(buf.Bytes())
+
 	return err
+
 }
 
 func (l *stdLogger) Close() error {
