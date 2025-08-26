@@ -42,6 +42,7 @@ var (
 	ErrGetKey                 = errors.Unauthorized(reason, "Can not get key while signing token")
 )
 
+// *********************************************************************************************************************
 // Option is jwt option.
 type Option func(*options)
 
@@ -75,8 +76,9 @@ func WithTokenHeader(header map[string]any) Option {
 	}
 }
 
+// *********************************************************************************************************************
 // Server is a server auth middleware. Check the token and extract the info from token.
-func Server(keyFunc jwt.Keyfunc, opts ...Option) middleware.Middleware {
+func Server(keyFunc jwt.Keyfunc, opts ...Option) middleware.Middleware { // 从传输层中解析请求中的TOKEN并存储到上下文中
 
 	o := &options{
 		signingMethod: jwt.SigningMethodHS256,
@@ -86,11 +88,11 @@ func Server(keyFunc jwt.Keyfunc, opts ...Option) middleware.Middleware {
 		opt(o)
 	}
 
-	return func(handler middleware.Handler) middleware.Handler {
+	return func(handler middleware.Handler) middleware.Handler { // Middleware
 
-		return func(ctx context.Context, req any) (any, error) {
+		return func(ctx context.Context, req any) (any, error) { // Handler
 
-			if header, ok := transport.FromServerContext(ctx); ok {
+			if header, ok := transport.FromServerContext(ctx); ok { // Transporter
 
 				if keyFunc == nil {
 					return nil, ErrMissingKeyFunc
@@ -136,7 +138,7 @@ func Server(keyFunc jwt.Keyfunc, opts ...Option) middleware.Middleware {
 					return nil, ErrUnSupportSigningMethod
 				}
 
-				ctx = NewContext(ctx, tokenInfo.Claims)
+				ctx = NewContext(ctx, tokenInfo.Claims) // 将TOKEN解析后的信息添加到上下文中
 
 				return handler(ctx, req)
 
@@ -151,50 +153,78 @@ func Server(keyFunc jwt.Keyfunc, opts ...Option) middleware.Middleware {
 }
 
 // Client is a client jwt middleware.
-func Client(keyProvider jwt.Keyfunc, opts ...Option) middleware.Middleware {
+func Client(keyProvider jwt.Keyfunc, opts ...Option) middleware.Middleware { // 将参数签名生成TOKEN并添加到传输层中
+
 	claims := jwt.RegisteredClaims{}
+
 	o := &options{
 		signingMethod: jwt.SigningMethodHS256,
 		claims:        func() jwt.Claims { return claims },
 	}
+
 	for _, opt := range opts {
 		opt(o)
 	}
-	return func(handler middleware.Handler) middleware.Handler {
-		return func(ctx context.Context, req any) (any, error) {
+
+	return func(handler middleware.Handler) middleware.Handler { // Middleware
+
+		return func(ctx context.Context, req any) (any, error) { // Middleware
+
 			if keyProvider == nil {
 				return nil, ErrNeedTokenProvider
 			}
+
 			token := jwt.NewWithClaims(o.signingMethod, o.claims())
+
 			if o.tokenHeader != nil {
 				for k, v := range o.tokenHeader {
 					token.Header[k] = v
 				}
 			}
+
 			key, err := keyProvider(token)
+
 			if err != nil {
 				return nil, ErrGetKey
 			}
+
 			tokenStr, err := token.SignedString(key)
+
 			if err != nil {
 				return nil, ErrSignToken
 			}
+
 			if clientContext, ok := transport.FromClientContext(ctx); ok {
+
 				clientContext.RequestHeader().Set(authorizationKey, fmt.Sprintf(bearerFormat, tokenStr))
+
 				return handler(ctx, req)
+
 			}
+
 			return nil, ErrWrongContext
+
 		}
+
 	}
+
 }
 
+// *********************************************************************************************************************
 // NewContext put auth info into context
 func NewContext(ctx context.Context, info jwt.Claims) context.Context {
+
 	return context.WithValue(ctx, authKey{}, info)
+
 }
 
 // FromContext extract auth info from context
 func FromContext(ctx context.Context) (token jwt.Claims, ok bool) {
+
 	token, ok = ctx.Value(authKey{}).(jwt.Claims)
+
 	return
+
 }
+
+// *********************************************************************************************************************

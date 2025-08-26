@@ -16,7 +16,7 @@ func Chain(m ...Middleware) Middleware { // 将多个中间件组合成一个中
 	return func(next Handler) Handler {
 
 		for i := len(m) - 1; i >= 0; i-- {
-			next = m[i](next)
+			next = m[i](next) // 生成新的HANDLER
 		}
 
 		return next
