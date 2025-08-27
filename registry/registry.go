@@ -36,7 +36,7 @@ type Watcher interface {
 
 // *********************************************************************************************************************
 // ServiceInstance is an instance of a service in a discovery system.
-type ServiceInstance struct {
+type ServiceInstance struct { // 服务实例
 	// ID is the unique instance ID as registered.
 	ID string `json:"id"`
 	// Name is the service name as registered.

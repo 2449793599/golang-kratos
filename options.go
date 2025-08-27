@@ -14,13 +14,14 @@ import (
 // Option is an application option.
 type Option func(o *options)
 
+// *********************************************************************************************************************
 // options is an application options.
 type options struct {
 	id        string
 	name      string
 	version   string
 	metadata  map[string]string
-	endpoints []*url.URL
+	endpoints []*url.URL // 服务端地址
 
 	ctx  context.Context
 	sigs []os.Signal
@@ -29,7 +30,7 @@ type options struct {
 	registrar        registry.Registrar
 	registrarTimeout time.Duration
 	stopTimeout      time.Duration
-	servers          []transport.Server
+	servers          []transport.Server // 传输层服务（HTTP或GRPC）
 
 	// Before and After funcs
 	beforeStart []func(context.Context) error
@@ -38,6 +39,7 @@ type options struct {
 	afterStop   []func(context.Context) error
 }
 
+// *********************************************************************************************************************
 // ID with service id.
 func ID(id string) Option {
 	return func(o *options) { o.id = id }
@@ -127,3 +129,5 @@ func AfterStop(fn func(context.Context) error) Option {
 		o.afterStop = append(o.afterStop, fn)
 	}
 }
+
+// *********************************************************************************************************************
