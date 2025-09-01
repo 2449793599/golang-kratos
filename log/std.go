@@ -22,7 +22,7 @@ type stdLogger struct {
 func NewStdLogger(w io.Writer) Logger {
 	return &stdLogger{
 		w:         w,
-		isDiscard: w == io.Discard,
+		isDiscard: w == io.Discard, // DUMMY
 		pool: &sync.Pool{
 			New: func() any {
 				return new(bytes.Buffer)

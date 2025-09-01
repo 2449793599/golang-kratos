@@ -15,85 +15,139 @@ import (
 
 // EncodeValues encode a message into url values.
 func EncodeValues(msg any) (url.Values, error) {
+
 	if msg == nil || (reflect.ValueOf(msg).Kind() == reflect.Ptr && reflect.ValueOf(msg).IsNil()) {
 		return url.Values{}, nil
 	}
+
 	if v, ok := msg.(proto.Message); ok {
+
 		u := make(url.Values)
+
 		err := encodeByField(u, "", v.ProtoReflect())
+
 		if err != nil {
 			return nil, err
 		}
+
 		return u, nil
+
 	}
+
 	return encoder.Encode(msg)
+
 }
 
 func encodeByField(u url.Values, path string, m protoreflect.Message) (finalErr error) {
+
 	m.Range(func(fd protoreflect.FieldDescriptor, v protoreflect.Value) bool {
+
 		var (
 			key     string
 			newPath string
 		)
+
 		if fd.HasJSONName() {
 			key = fd.JSONName()
 		} else {
 			key = fd.TextName()
 		}
+
 		if path == "" {
 			newPath = key
 		} else {
 			newPath = path + "." + key
 		}
+
 		if of := fd.ContainingOneof(); of != nil {
 			if f := m.WhichOneof(of); f != nil && f != fd {
 				return true
 			}
 		}
+
 		switch {
+
 		case fd.IsList():
+
 			if v.List().Len() > 0 {
+
 				list, err := encodeRepeatedField(fd, v.List())
+
 				if err != nil {
+
 					finalErr = err
+
 					return false
+
 				}
+
 				for _, item := range list {
 					u.Add(newPath, item)
 				}
+
 			}
+
 		case fd.IsMap():
+
 			if v.Map().Len() > 0 {
+
 				m, err := encodeMapField(fd, v.Map())
+
 				if err != nil {
+
 					finalErr = err
+
 					return false
+
 				}
 				for k, value := range m {
 					u.Set(fmt.Sprintf("%s[%s]", newPath, k), value)
 				}
+
 			}
+
 		case (fd.Kind() == protoreflect.MessageKind) || (fd.Kind() == protoreflect.GroupKind):
+
 			value, err := encodeMessage(fd.Message(), v)
+
 			if err == nil {
+
 				u.Set(newPath, value)
+
 				return true
+
 			}
+
 			if err = encodeByField(u, newPath, v.Message()); err != nil {
+
 				finalErr = err
+
 				return false
+
 			}
+
 		default:
+
 			value, err := EncodeField(fd, v)
+
 			if err != nil {
+
 				finalErr = err
+
 				return false
+
 			}
+
 			u.Set(newPath, value)
+
 		}
+
 		return true
+
 	})
+
 	return
+
 }
 
 func encodeRepeatedField(fieldDescriptor protoreflect.FieldDescriptor, list protoreflect.List) ([]string, error) {

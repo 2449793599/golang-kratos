@@ -38,48 +38,66 @@ type codec struct {
 }
 
 func (c codec) Marshal(v any) ([]byte, error) {
+
 	var vs url.Values
+
 	var err error
+
 	if m, ok := v.(proto.Message); ok {
+
 		vs, err = EncodeValues(m)
+
 		if err != nil {
 			return nil, err
 		}
+
 	} else {
+
 		vs, err = c.encoder.Encode(v)
+
 		if err != nil {
 			return nil, err
 		}
+
 	}
+
 	for k, v := range vs {
 		if len(v) == 0 {
 			delete(vs, k)
 		}
 	}
+
 	return []byte(vs.Encode()), nil
+
 }
 
 func (c codec) Unmarshal(data []byte, v any) error {
+
 	vs, err := url.ParseQuery(string(data))
+
 	if err != nil {
 		return err
 	}
 
 	rv := reflect.ValueOf(v)
+
 	for rv.Kind() == reflect.Ptr {
 		if rv.IsNil() {
 			rv.Set(reflect.New(rv.Type().Elem()))
 		}
 		rv = rv.Elem()
 	}
+
 	if m, ok := v.(proto.Message); ok {
 		return DecodeValues(m, vs)
 	}
+
 	if m, ok := rv.Interface().(proto.Message); ok {
 		return DecodeValues(m, vs)
 	}
 
 	return c.decoder.Decode(v, vs)
+
 }
 
 func (codec) Name() string {

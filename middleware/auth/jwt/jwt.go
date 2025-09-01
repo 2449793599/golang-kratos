@@ -54,7 +54,7 @@ type options struct {
 }
 
 // WithSigningMethod with signing method option.
-func WithSigningMethod(method jwt.SigningMethod) Option {
+func WithSigningMethod(method jwt.SigningMethod) Option { // 用于配置JWT签名的算法
 	return func(o *options) {
 		o.signingMethod = method
 	}
@@ -63,7 +63,7 @@ func WithSigningMethod(method jwt.SigningMethod) Option {
 // WithClaims with customer claim
 // If you use it in Server, f needs to return a new jwt.Claims object each time to avoid concurrent write problems
 // If you use it in Client, f only needs to return a single object to provide performance
-func WithClaims(f func() jwt.Claims) Option {
+func WithClaims(f func() jwt.Claims) Option { // 配置JWT
 	return func(o *options) {
 		o.claims = f
 	}
@@ -92,7 +92,7 @@ func Server(keyFunc jwt.Keyfunc, opts ...Option) middleware.Middleware { // 从�
 
 		return func(ctx context.Context, req any) (any, error) { // Handler
 
-			if header, ok := transport.FromServerContext(ctx); ok { // Transporter
+			if header, ok := transport.FromServerContext(ctx); ok { // 表示从请求头中获取认证信息 Transporter
 
 				if keyFunc == nil {
 					return nil, ErrMissingKeyFunc

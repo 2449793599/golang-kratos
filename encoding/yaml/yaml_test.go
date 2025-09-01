@@ -7,6 +7,7 @@ import (
 )
 
 func TestCodec_Unmarshal(t *testing.T) {
+
 	tests := []struct {
 		data  string
 		value any
@@ -74,31 +75,46 @@ func TestCodec_Unmarshal(t *testing.T) {
 			map[string]any{"v": -0.1},
 		},
 	}
+
 	for _, tt := range tests {
+
 		v := reflect.ValueOf(tt.value).Type()
+
 		value := reflect.New(v)
+
 		err := (codec{}).Unmarshal([]byte(tt.data), value.Interface())
+
 		if err != nil {
 			t.Fatalf("(codec{}).Unmarshal should not return err")
 		}
+
 	}
+
 	spec := struct {
 		A string
 		B map[string]any
 	}{A: "a"}
+
 	err := (codec{}).Unmarshal([]byte("v: hi"), &spec.B)
+
 	if err != nil {
 		t.Fatalf("(codec{}).Unmarshal should not return err")
 	}
+
 }
 
 func TestCodec_Marshal(t *testing.T) {
+
 	value := map[string]string{"v": "hi"}
+
 	got, err := (codec{}).Marshal(value)
+
 	if err != nil {
 		t.Fatalf("should not return err")
 	}
+
 	if string(got) != "v: hi\n" {
 		t.Fatalf("want \"v: hi\n\" return \"%s\"", string(got))
 	}
+
 }

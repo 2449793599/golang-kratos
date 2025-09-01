@@ -12,6 +12,7 @@ import (
 )
 
 func TestMarshalTimeStamp(t *testing.T) {
+
 	tests := []struct {
 		input  *timestamppb.Timestamp
 		expect string
@@ -25,18 +26,25 @@ func TestMarshalTimeStamp(t *testing.T) {
 			expect: "2023-01-01T14:02:01.000000100Z",
 		},
 	}
+
 	for _, v := range tests {
+
 		got, err := marshalTimestamp(v.input.ProtoReflect())
+
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		if want := v.expect; got != want {
 			t.Errorf("expect %v, got %v", want, got)
 		}
+
 	}
+
 }
 
 func TestMarshalDuration(t *testing.T) {
+
 	tests := []struct {
 		input  *durationpb.Duration
 		expect string
@@ -58,18 +66,25 @@ func TestMarshalDuration(t *testing.T) {
 			expect: "-1m40s",
 		},
 	}
+
 	for _, v := range tests {
+
 		got, err := marshalDuration(v.input.ProtoReflect())
+
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		if want := v.expect; got != want {
 			t.Errorf("expect %s, got %s", want, got)
 		}
+
 	}
+
 }
 
 func TestMarshalBytes(t *testing.T) {
+
 	tests := []struct {
 		input  protoreflect.Message
 		expect string
@@ -83,13 +98,19 @@ func TestMarshalBytes(t *testing.T) {
 			expect: base64.StdEncoding.EncodeToString([]byte("kratos")),
 		},
 	}
+
 	for _, v := range tests {
+
 		got, err := marshalBytes(v.input)
+
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		if want := v.expect; got != want {
 			t.Errorf("expect %v, got %v", want, got)
 		}
+
 	}
+
 }

@@ -18,6 +18,7 @@ type NestedOrder struct {
 }
 
 func TestCodec_Marshal(t *testing.T) {
+
 	tests := []struct {
 		Value     any
 		ExpectXML string
@@ -37,22 +38,31 @@ func TestCodec_Marshal(t *testing.T) {
 				`</result>`,
 		},
 	}
+
 	for _, tt := range tests {
+
 		data, err := (codec{}).Marshal(tt.Value)
+
 		if err != nil {
 			t.Errorf("marshal(%#v): %s", tt.Value, err)
 		}
+
 		if got, want := string(data), tt.ExpectXML; got != want {
+
 			if strings.Contains(want, "\n") {
 				t.Errorf("marshal(%#v):\nHAVE:\n%s\nWANT:\n%s", tt.Value, got, want)
 			} else {
 				t.Errorf("marshal(%#v):\nhave %#q\nwant %#q", tt.Value, got, want)
 			}
+
 		}
+
 	}
+
 }
 
 func TestCodec_Unmarshal(t *testing.T) {
+
 	tests := []struct {
 		want     any
 		InputXML string
@@ -70,20 +80,29 @@ func TestCodec_Unmarshal(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+
 		vt := reflect.TypeOf(tt.want)
+
 		dest := reflect.New(vt.Elem()).Interface()
+
 		data := []byte(tt.InputXML)
+
 		err := (codec{}).Unmarshal(data, dest)
+
 		if err != nil {
 			t.Errorf("unmarshal(%#v, %#v): %s", tt.InputXML, dest, err)
 		}
+
 		if got, want := dest, tt.want; !reflect.DeepEqual(got, want) {
 			t.Errorf("unmarshal(%q):\nhave %#v\nwant %#v", tt.InputXML, got, want)
 		}
+
 	}
+
 }
 
 func TestCodec_NilUnmarshal(t *testing.T) {
+
 	tests := []struct {
 		want     any
 		InputXML string
@@ -101,17 +120,24 @@ func TestCodec_NilUnmarshal(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+
 		s := struct {
 			A string `xml:"a"`
 			B *NestedOrder
 		}{A: "a"}
+
 		data := []byte(tt.InputXML)
+
 		err := (codec{}).Unmarshal(data, &s.B)
+
 		if err != nil {
 			t.Errorf("unmarshal(%#v, %#v): %s", tt.InputXML, s.B, err)
 		}
+
 		if got, want := s.B, tt.want; !reflect.DeepEqual(got, want) {
 			t.Errorf("unmarshal(%q):\nhave %#v\nwant %#v", tt.InputXML, got, want)
 		}
+
 	}
+
 }

@@ -33,10 +33,13 @@ const (
 )
 
 func (a *mock) UnmarshalJSON(b []byte) error {
+
 	var s string
+
 	if err := json.Unmarshal(b, &s); err != nil {
 		return err
 	}
+
 	switch strings.ToLower(s) {
 	default:
 		a.value = Unknown
@@ -47,10 +50,13 @@ func (a *mock) UnmarshalJSON(b []byte) error {
 	}
 
 	return nil
+
 }
 
 func (a *mock) MarshalJSON() ([]byte, error) {
+
 	var s string
+
 	switch a.value {
 	default:
 		s = "unknown"
@@ -61,9 +67,11 @@ func (a *mock) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(s)
+
 }
 
 func TestJSON_Marshal(t *testing.T) {
+
 	tests := []struct {
 		input  any
 		expect string
@@ -85,26 +93,39 @@ func TestJSON_Marshal(t *testing.T) {
 			expect: `"gopher"`,
 		},
 	}
+
 	for _, v := range tests {
+
 		data, err := (codec{}).Marshal(v.input)
+
 		if err != nil {
 			t.Errorf("marshal(%#v): %s", v.input, err)
 		}
+
 		if got, want := string(data), v.expect; strings.ReplaceAll(got, " ", "") != want {
+
 			if strings.Contains(want, "\n") {
 				t.Errorf("marshal(%#v):\nHAVE:\n%s\nWANT:\n%s", v.input, got, want)
 			} else {
 				t.Errorf("marshal(%#v):\nhave %#q\nwant %#q", v.input, got, want)
 			}
+
 		}
+
 	}
+
 }
 
 func TestJSON_Unmarshal(t *testing.T) {
+
 	p := testMessage{}
+
 	p2 := testData.TestModel{}
+
 	p3 := &testData.TestModel{}
+
 	p4 := &mock{}
+
 	tests := []struct {
 		input  string
 		expect any
@@ -130,18 +151,27 @@ func TestJSON_Unmarshal(t *testing.T) {
 			expect: p4,
 		},
 	}
+
 	for _, v := range tests {
+
 		want := []byte(v.input)
+
 		err := (codec{}).Unmarshal(want, v.expect)
+
 		if err != nil {
 			t.Errorf("marshal(%#v): %s", v.input, err)
 		}
+
 		got, err := codec{}.Marshal(v.expect)
+
 		if err != nil {
 			t.Errorf("marshal(%#v): %s", v.input, err)
 		}
+
 		if !reflect.DeepEqual(strings.ReplaceAll(string(got), " ", ""), strings.ReplaceAll(string(want), " ", "")) {
 			t.Errorf("marshal(%#v):\nhave %#q\nwant %#q", v.input, got, want)
 		}
+
 	}
+
 }
