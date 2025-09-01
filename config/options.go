@@ -21,8 +21,9 @@ type Merge func(dst, src any) error
 // Option is config option.
 type Option func(*options)
 
+// *********************************************************************************************************************
 type options struct {
-	sources  []Source
+	sources  []Source // 配置源
 	decoder  Decoder
 	resolver Resolver
 	merge    Merge
@@ -68,56 +69,88 @@ func WithMergeFunc(m Merge) Option {
 	}
 }
 
+// *********************************************************************************************************************
 // defaultDecoder decode config from source KeyValue
 // to target map[string]interface{} using src.Format codec.
 func defaultDecoder(src *KeyValue, target map[string]any) error {
+
 	if src.Format == "" {
+
 		// expand key "aaa.bbb" into map[aaa]map[bbb]interface{}
 		keys := strings.Split(src.Key, ".")
+
 		for i, k := range keys {
+
 			if i == len(keys)-1 {
 				target[k] = src.Value
 			} else {
+
 				sub := make(map[string]any)
+
 				target[k] = sub
 				target = sub
+
 			}
+
 		}
+
 		return nil
+
 	}
+
 	if codec := encoding.GetCodec(src.Format); codec != nil {
 		return codec.Unmarshal(src.Value, &target)
 	}
+
 	return fmt.Errorf("unsupported key: %s format: %s", src.Key, src.Format)
+
 }
 
 func newActualTypesResolver(enableConvertToType bool) func(map[string]any) error {
+
 	return func(input map[string]any) error {
+
 		mapper := mapper(input)
+
 		return resolver(input, mapper, enableConvertToType)
+
 	}
+
 }
 
 // defaultResolver resolve placeholder in map value,
 // placeholder format in ${key:default}.
 func defaultResolver(input map[string]any) error {
+
 	mapper := mapper(input)
+
 	return resolver(input, mapper, false)
+
 }
 
 func resolver(input map[string]any, mapper func(name string) string, toType bool) error {
+
 	var resolve func(map[string]any) error
+
 	resolve = func(sub map[string]any) error {
+
 		for k, v := range sub {
+
 			switch vt := v.(type) {
 			case string:
+
 				sub[k] = expand(vt, mapper, toType)
+
 			case map[string]any:
+
 				if err := resolve(vt); err != nil {
 					return err
 				}
+
 			case []any:
+
 				for i, iface := range vt {
+
 					switch it := iface.(type) {
 					case string:
 						vt[i] = expand(it, mapper, toType)
@@ -126,27 +159,45 @@ func resolver(input map[string]any, mapper func(name string) string, toType bool
 							return err
 						}
 					}
+
 				}
+
 				sub[k] = vt
+
 			}
+
 		}
+
 		return nil
+
 	}
+
 	return resolve(input)
+
 }
 
 func mapper(input map[string]any) func(name string) string {
+
 	mapper := func(name string) string {
+
 		args := strings.SplitN(strings.TrimSpace(name), ":", 2) //nolint:mnd
+
 		if v, has := readValue(input, args[0]); has {
+
 			s, _ := v.String()
+
 			return s
+
 		} else if len(args) > 1 { // default value
 			return args[1]
 		}
+
 		return ""
+
 	}
+
 	return mapper
+
 }
 
 func convertToType(input string) any {
@@ -158,8 +209,11 @@ func convertToType(input string) any {
 
 	// Try converting to bool
 	if input == "true" || input == "false" {
+
 		b, _ := strconv.ParseBool(input)
+
 		return b
+
 	}
 
 	// Try converting to float64
@@ -176,21 +230,37 @@ func convertToType(input string) any {
 
 	// Default to string if no other conversion succeeds
 	return input
+
 }
 
 func expand(s string, mapping func(string) string, toType bool) any {
+
 	r := regexp.MustCompile(`\${(.*?)}`)
+
 	re := r.FindAllStringSubmatch(s, -1)
+
 	var ct any
+
 	for _, i := range re {
+
 		if len(i) == 2 { //nolint:mnd
+
 			m := mapping(i[1])
+
 			if toType {
+
 				ct = convertToType(m)
+
 				return ct
+
 			}
+
 			s = strings.ReplaceAll(s, i[0], m)
+
 		}
+
 	}
+
 	return s
+
 }

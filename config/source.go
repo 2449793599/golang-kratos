@@ -2,9 +2,9 @@ package config
 
 // KeyValue is config key value.
 type KeyValue struct {
-	Key    string
-	Value  []byte
-	Format string
+	Key    string // 文件名称
+	Value  []byte // 文件内容
+	Format string // 文件格式
 }
 
 // Source is config source.

@@ -28,12 +28,15 @@ const _testJSON = `
 }`
 
 func TestEnvWithPrefix(t *testing.T) {
+
 	var (
 		path     = filepath.Join(t.TempDir(), "test_config")
 		filename = filepath.Join(path, "test.json")
 		data     = []byte(_testJSON)
 	)
+
 	defer os.Remove(path)
+
 	if err := os.MkdirAll(path, 0o700); err != nil {
 		t.Error(err)
 	}
@@ -43,6 +46,7 @@ func TestEnvWithPrefix(t *testing.T) {
 
 	// set env
 	prefix1, prefix2 := "KRATOS_", "FOO"
+
 	envs := map[string]string{
 		prefix1 + "SERVICE_NAME": "kratos_app",
 		prefix2 + "ADDR":         "192.168.0.1",
@@ -57,7 +61,9 @@ func TestEnvWithPrefix(t *testing.T) {
 	}
 
 	c := config.New(config.WithSource(
+
 		file.NewSource(path),
+
 		NewSource(prefix1, prefix2),
 	))
 
@@ -98,60 +104,89 @@ func TestEnvWithPrefix(t *testing.T) {
 	}
 
 	for _, test := range tests {
+
 		t.Run(test.name, func(t *testing.T) {
+
 			var err error
+
 			v := c.Value(test.path)
+
 			if v.Load() != nil {
+
 				var actual any
+
 				switch test.expect.(type) {
 				case int:
+
 					if actual, err = v.Int(); err == nil {
 						if !reflect.DeepEqual(test.expect.(int), int(actual.(int64))) {
 							t.Errorf("expect %v, actual %v", test.expect, actual)
 						}
 					}
+
 				case string:
+
 					if actual, err = v.String(); err == nil {
 						if !reflect.DeepEqual(test.expect.(string), actual.(string)) {
 							t.Errorf(`expect %v, actual %v`, test.expect, actual)
 						}
 					}
+
 				case bool:
+
 					if actual, err = v.Bool(); err == nil {
 						if !reflect.DeepEqual(test.expect.(bool), actual.(bool)) {
 							t.Errorf(`expect %v, actual %v`, test.expect, actual)
 						}
 					}
+
 				case float64:
+
 					if actual, err = v.Float(); err == nil {
 						if !reflect.DeepEqual(test.expect.(float64), actual.(float64)) {
 							t.Errorf(`expect %v, actual %v`, test.expect, actual)
 						}
 					}
+
 				default:
+
 					actual = v.Load()
+
 					if !reflect.DeepEqual(test.expect, actual) {
+
 						t.Logf("\nexpect: %#v\nactural: %#v", test.expect, actual)
+
 						t.Fail()
+
 					}
+
 				}
+
 				if err != nil {
 					t.Error(err)
 				}
+
 			} else {
+
 				t.Error("value path not found")
+
 			}
+
 		})
+
 	}
+
 }
 
 func TestEnvWithoutPrefix(t *testing.T) {
+
 	var (
 		path     = filepath.Join(t.TempDir(), "test_config")
 		filename = filepath.Join(path, "test.json")
 		data     = []byte(_testJSON)
 	)
 	defer os.Remove(path)
+
 	if err := os.MkdirAll(path, 0o700); err != nil {
 		t.Error(err)
 	}
@@ -212,60 +247,89 @@ func TestEnvWithoutPrefix(t *testing.T) {
 	}
 
 	for _, test := range tests {
+
 		t.Run(test.name, func(t *testing.T) {
+
 			var err error
+
 			v := c.Value(test.path)
+
 			if v.Load() != nil {
+
 				var actual any
 				switch test.expect.(type) {
 				case int:
+
 					if actual, err = v.Int(); err == nil {
 						if !reflect.DeepEqual(test.expect.(int), int(actual.(int64))) {
 							t.Errorf("expect %v, actual %v", test.expect, actual)
 						}
 					}
+
 				case string:
+
 					if actual, err = v.String(); err == nil {
 						if !reflect.DeepEqual(test.expect.(string), actual.(string)) {
 							t.Errorf(`expect %v, actual %v`, test.expect, actual)
 						}
 					}
+
 				case bool:
+
 					if actual, err = v.Bool(); err == nil {
 						if !reflect.DeepEqual(test.expect.(bool), actual.(bool)) {
 							t.Errorf(`expect %v, actual %v`, test.expect, actual)
 						}
 					}
+
 				case float64:
+
 					if actual, err = v.Float(); err == nil {
 						if !reflect.DeepEqual(test.expect.(float64), actual.(float64)) {
 							t.Errorf(`expect %v, actual %v`, test.expect, actual)
 						}
 					}
+
 				default:
+
 					actual = v.Load()
+
 					if !reflect.DeepEqual(test.expect, actual) {
+
 						t.Logf("\nexpect: %#v\nactural: %#v", test.expect, actual)
+
 						t.Fail()
+
 					}
+
 				}
+
 				if err != nil {
 					t.Error(err)
 				}
+
 			} else {
+
 				t.Error("value path not found")
+
 			}
+
 		})
+
 	}
+
 }
 
 func Test_env_load(t *testing.T) {
+
 	type fields struct {
 		prefixes []string
 	}
+
 	type args struct {
 		envStrings []string
 	}
+
 	tests := []struct {
 		name   string
 		fields fields
@@ -374,24 +438,34 @@ func Test_env_load(t *testing.T) {
 			want: nil,
 		},
 	}
+
 	for _, tt := range tests {
+
 		t.Run(tt.name, func(t *testing.T) {
+
 			e := &env{
 				prefixes: tt.fields.prefixes,
 			}
+
 			got := e.load(tt.args.envStrings)
+
 			if !reflect.DeepEqual(tt.want, got) {
 				t.Errorf("env.load() = %v, want %v", got, tt.want)
 			}
+
 		})
+
 	}
+
 }
 
 func Test_matchPrefix(t *testing.T) {
+
 	type args struct {
 		prefixes []string
 		s        string
 	}
+
 	tests := []struct {
 		name   string
 		args   args
@@ -405,25 +479,39 @@ func Test_matchPrefix(t *testing.T) {
 		{args: args{prefixes: []string{"foo=1234"}, s: "foo=123"}, want: "", wantOk: false},
 		{args: args{prefixes: []string{"bar"}, s: "foo=123"}, want: "", wantOk: false},
 	}
+
 	for _, tt := range tests {
+
 		t.Run(tt.name, func(t *testing.T) {
+
 			got, gotOk := matchPrefix(tt.args.prefixes, tt.args.s)
+
 			if got != tt.want {
 				t.Errorf("matchPrefix() got = %v, want %v", got, tt.want)
 			}
+
 			if gotOk != tt.wantOk {
 				t.Errorf("matchPrefix() gotOk = %v, wantOk %v", gotOk, tt.wantOk)
 			}
+
 		})
+
 	}
+
 }
 
 func Test_env_watch(t *testing.T) {
+
 	prefixes := []string{"BAR", "FOO"}
+
 	source := NewSource(prefixes...)
+
 	w, err := source.Watch()
+
 	if err != nil {
 		t.Errorf("expect no err, got %v", err)
 	}
+
 	_ = w.Stop()
+
 }
