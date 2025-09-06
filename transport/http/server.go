@@ -22,10 +22,14 @@ import (
 var (
 	_ transport.Server     = (*Server)(nil)
 	_ transport.Endpointer = (*Server)(nil)
-	_ http.Handler         = (*Server)(nil)
+
+	_ http.Handler = (*Server)(nil)
 )
 
+// *********************************************************************************************************************
+
 // ServerOption is an HTTP server option.
+
 type ServerOption func(*Server)
 
 // Network with server network.
@@ -154,8 +158,12 @@ func MethodNotAllowedHandler(handler http.Handler) ServerOption {
 }
 
 // *********************************************************************************************************************
+// 实现接口：
+// transport.Server
+// transport.Endpointer
+
 // Server is an HTTP server wrapper.
-type Server struct {
+type Server struct { // HTTP服务器
 	*http.Server
 	lis         net.Listener
 	tlsConf     *tls.Config

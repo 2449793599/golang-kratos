@@ -8,7 +8,7 @@ import (
 
 // *********************************************************************************************************************
 // Registrar is service registrar.
-type Registrar interface {
+type Registrar interface { // 服务注册
 	// Register the registration.
 	Register(ctx context.Context, service *ServiceInstance) error
 	// Deregister the registration.
@@ -16,7 +16,7 @@ type Registrar interface {
 }
 
 // Discovery is service discovery.
-type Discovery interface {
+type Discovery interface { // 服务发现
 	// GetService return the service instances in memory according to the service name.
 	GetService(ctx context.Context, serviceName string) ([]*ServiceInstance, error) // 内存？？？
 	// Watch creates a watcher according to the service name.
@@ -24,7 +24,7 @@ type Discovery interface {
 }
 
 // Watcher is service watcher.
-type Watcher interface {
+type Watcher interface { // 服务监控器
 	// Next returns services in the following two cases:
 	// 1.the first time to watch and the service instance list is not empty.
 	// 2.any service instance changes found.
@@ -36,7 +36,7 @@ type Watcher interface {
 
 // *********************************************************************************************************************
 // ServiceInstance is an instance of a service in a discovery system.
-type ServiceInstance struct { // 服务实例
+type ServiceInstance struct { // 服务实例（服务注册用）
 	// ID is the unique instance ID as registered.
 	ID string `json:"id"`
 	// Name is the service name as registered.

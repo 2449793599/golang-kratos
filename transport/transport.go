@@ -56,6 +56,7 @@ type Transporter interface {
 	ReplyHeader() Header
 }
 
+// *********************************************************************************************************************
 // Kind defines the type of Transport
 type Kind string
 

@@ -68,36 +68,46 @@ func (tr *Transport) PathTemplate() string {
 	return tr.pathTemplate
 }
 
+// *********************************************************************************************************************
+
 // SetOperation sets the transport operation.
 func SetOperation(ctx context.Context, op string) {
+
 	if tr, ok := transport.FromServerContext(ctx); ok {
 		if tr, ok := tr.(*Transport); ok {
 			tr.operation = op
 		}
 	}
+
 }
 
 // SetCookie adds a Set-Cookie header to the provided [ResponseWriter]'s headers.
 // The provided cookie must have a valid Name. Invalid cookies may be
 // silently dropped.
 func SetCookie(ctx context.Context, cookie *http.Cookie) {
+
 	if tr, ok := transport.FromServerContext(ctx); ok {
 		if tr, ok := tr.(*Transport); ok {
 			http.SetCookie(tr.response, cookie)
 		}
 	}
+
 }
 
 // RequestFromServerContext returns request from context.
 func RequestFromServerContext(ctx context.Context) (*http.Request, bool) {
+
 	if tr, ok := transport.FromServerContext(ctx); ok {
 		if tr, ok := tr.(*Transport); ok {
 			return tr.request, true
 		}
 	}
+
 	return nil, false
+
 }
 
+// *********************************************************************************************************************
 type headerCarrier http.Header
 
 // Get returns the value associated with the passed key.
@@ -117,14 +127,20 @@ func (hc headerCarrier) Add(key string, value string) {
 
 // Keys lists the keys stored in this carrier.
 func (hc headerCarrier) Keys() []string {
+
 	keys := make([]string, 0, len(hc))
+
 	for k := range http.Header(hc) {
 		keys = append(keys, k)
 	}
+
 	return keys
+
 }
 
 // Values returns a slice of values associated with the passed key.
 func (hc headerCarrier) Values(key string) []string {
 	return http.Header(hc).Values(key)
 }
+
+// *********************************************************************************************************************

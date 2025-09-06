@@ -30,17 +30,17 @@ type AppInfo interface {
 // App is an application components lifecycle manager.
 type App struct {
 	opts     options
-	ctx      context.Context
-	cancel   context.CancelFunc
+	ctx      context.Context    // 应用上下文2：可取消
+	cancel   context.CancelFunc // 应用上下文2：可取消
 	mu       sync.Mutex
-	instance *registry.ServiceInstance // 服务实例（注册用）
+	instance *registry.ServiceInstance // 服务实例（服务注册用）
 }
 
 // New create an application lifecycle manager.
 func New(opts ...Option) *App {
 
 	o := options{
-		ctx:              context.Background(),
+		ctx:              context.Background(), // 应用上下文1：默认
 		sigs:             []os.Signal{syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT},
 		registrarTimeout: 10 * time.Second,
 	}
@@ -57,7 +57,7 @@ func New(opts ...Option) *App {
 		log.SetLogger(o.logger)
 	}
 
-	ctx, cancel := context.WithCancel(o.ctx)
+	ctx, cancel := context.WithCancel(o.ctx) // 应用上下文2：可取消
 
 	return &App{
 		ctx:    ctx,
@@ -90,10 +90,11 @@ func (a *App) Endpoint() []string {
 
 }
 
+// *********************************************************************************************************************
 // Run executes all OnStart hooks registered with the application's Lifecycle.
 func (a *App) Run() error {
 
-	instance, err := a.buildInstance() // 构建服务实例（注册用）
+	instance, err := a.buildInstance() // 构建服务实例（服务注册用）
 
 	if err != nil {
 		return err
@@ -103,9 +104,9 @@ func (a *App) Run() error {
 	a.instance = instance
 	a.mu.Unlock()
 
-	sctx := NewContext(a.ctx, a) // 将整个APP放入到上下文中
+	sctx := NewContext(a.ctx, a) // 应用上下文3：将整个APP放入到上下文中
 
-	eg, ctx := errgroup.WithContext(sctx) // ？？？？
+	eg, ctx := errgroup.WithContext(sctx) // 应用上下文4：WaitGroup
 
 	wg := sync.WaitGroup{}
 
@@ -123,7 +124,7 @@ func (a *App) Run() error {
 
 		eg.Go(func() error {
 
-			<-ctx.Done() // wait for stop signal
+			<-ctx.Done() // 顺序9：wait for stop signal
 
 			stopCtx := octx
 
@@ -141,13 +142,13 @@ func (a *App) Run() error {
 
 		})
 
-		wg.Add(1)
+		wg.Add(1) // 顺序1
 
-		eg.Go(func() error {
+		eg.Go(func() error { // 顺序2
 
-			wg.Done() // here is to ensure server start has begun running before register, so defer is not needed
+			wg.Done() // 顺序3 here is to ensure server start has begun running before register, so defer is not needed
 
-			return server.Start(octx) // 启动服务
+			return server.Start(octx) // 启动服务（先启动服务然后才能注册）
 
 		})
 
@@ -155,12 +156,12 @@ func (a *App) Run() error {
 
 	wg.Wait()
 
-	if a.opts.registrar != nil {
+	if a.opts.registrar != nil { // 顺序4：
 
 		rctx, rcancel := context.WithTimeout(ctx, a.opts.registrarTimeout)
 		defer rcancel()
 
-		if err = a.opts.registrar.Register(rctx, instance); err != nil { // 注册服务实例
+		if err = a.opts.registrar.Register(rctx, instance); err != nil { // 服务注册
 			return err
 		}
 
@@ -172,16 +173,17 @@ func (a *App) Run() error {
 		}
 	}
 
+	// ****************************************************************
 	c := make(chan os.Signal, 1)
 
 	signal.Notify(c, a.opts.sigs...)
 
 	eg.Go(func() error {
 		select {
-		case <-ctx.Done():
+		case <-ctx.Done(): // 顺序8：
 			return nil
 		case <-c:
-			return a.Stop()
+			return a.Stop() // 顺序5：
 		}
 	})
 
@@ -212,19 +214,19 @@ func (a *App) Stop() (err error) {
 	instance := a.instance
 	a.mu.Unlock()
 
-	if a.opts.registrar != nil && instance != nil {
+	if a.opts.registrar != nil && instance != nil { // 顺序6：
 
 		ctx, cancel := context.WithTimeout(NewContext(a.ctx, a), a.opts.registrarTimeout)
 		defer cancel()
 
-		if err = a.opts.registrar.Deregister(ctx, instance); err != nil {
+		if err = a.opts.registrar.Deregister(ctx, instance); err != nil { // 服务注销
 			return err
 		}
 
 	}
 
 	if a.cancel != nil {
-		a.cancel()
+		a.cancel() // 顺序7：
 	}
 
 	return err

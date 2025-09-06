@@ -11,13 +11,14 @@ import (
 	"github.com/go-kratos/kratos/v2/transport"
 )
 
+// *********************************************************************************************************************
 // Option is an application option.
 type Option func(o *options)
 
 // *********************************************************************************************************************
 // options is an application options.
-type options struct {
-	id        string
+type options struct { // APP配置选项 -- 所有参数均可配置
+	id        string // 默认为UUID
 	name      string
 	version   string
 	metadata  map[string]string
@@ -26,13 +27,13 @@ type options struct {
 	ctx  context.Context
 	sigs []os.Signal
 
-	logger           log.Logger
-	registrar        registry.Registrar
+	logger           log.Logger         // 日志
+	registrar        registry.Registrar // 服务注册器
 	registrarTimeout time.Duration
 	stopTimeout      time.Duration
-	servers          []transport.Server // 传输层服务（HTTP或GRPC）
+	servers          []transport.Server // 传输层服务（HTTP或GRPC） -- transport.Endpointer
 
-	// Before and After funcs
+	// Before and After funcs：在应用启动前和停止后执行的函数
 	beforeStart []func(context.Context) error
 	beforeStop  []func(context.Context) error
 	afterStart  []func(context.Context) error

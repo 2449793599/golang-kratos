@@ -16,9 +16,11 @@ const name = "discovery"
 
 var ErrWatcherCreateTimeout = errors.New("discovery create watcher overtime")
 
+// *********************************************************************************************************************
 // Option is builder option.
 type Option func(o *builder)
 
+// *********************************************************************************************************************
 // WithTimeout with timeout option.
 func WithTimeout(timeout time.Duration) Option {
 	return func(b *builder) {
@@ -55,6 +57,7 @@ func PrintDebugLog(p bool) Option {
 	}
 }
 
+// *********************************************************************************************************************
 type builder struct {
 	discoverer registry.Discovery
 	timeout    time.Duration
@@ -65,6 +68,7 @@ type builder struct {
 
 // NewBuilder creates a builder which is used to factory registry resolvers.
 func NewBuilder(d registry.Discovery, opts ...Option) resolver.Builder {
+
 	b := &builder{
 		discoverer: d,
 		timeout:    time.Second * 10,
@@ -72,42 +76,62 @@ func NewBuilder(d registry.Discovery, opts ...Option) resolver.Builder {
 		debugLog:   true,
 		subsetSize: 25,
 	}
+
 	for _, o := range opts {
 		o(b)
 	}
+
 	return b
+
 }
 
 func (b *builder) Build(target resolver.Target, cc resolver.ClientConn, _ resolver.BuildOptions) (resolver.Resolver, error) {
+
 	watchRes := &struct {
 		err error
 		w   registry.Watcher
 	}{}
 
 	done := make(chan struct{}, 1)
+
 	ctx, cancel := context.WithCancel(context.Background())
+
 	go func() {
-		w, err := b.discoverer.Watch(ctx, strings.TrimPrefix(target.URL.Path, "/"))
+
+		w, err := b.discoverer.Watch(ctx, strings.TrimPrefix(target.URL.Path, "/")) // GRPC服务发现
+
 		watchRes.w = w
 		watchRes.err = err
+
 		close(done)
+
 	}()
 
 	var err error
+
 	if b.timeout > 0 {
+
 		select {
 		case <-done:
 			err = watchRes.err
 		case <-time.After(b.timeout):
 			err = ErrWatcherCreateTimeout
 		}
+
 	} else {
+
 		<-done
+
 		err = watchRes.err
+
 	}
+
 	if err != nil {
+
 		cancel()
+
 		return nil, err
+
 	}
 
 	r := &discoveryResolver{
@@ -120,8 +144,11 @@ func (b *builder) Build(target resolver.Target, cc resolver.ClientConn, _ resolv
 		subsetSize:  b.subsetSize,
 		selectorKey: uuid.New().String(),
 	}
+
 	go r.watch()
+
 	return r, nil
+
 }
 
 // Scheme return scheme of discovery

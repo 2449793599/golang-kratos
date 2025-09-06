@@ -38,50 +38,66 @@ func (tr *mockTransport) ReplyHeader() Header {
 }
 
 func TestServerTransport(t *testing.T) {
+
 	ctx := context.Background()
 
 	ctx = NewServerContext(ctx, &mockTransport{endpoint: "test_endpoint"})
+
 	tr, ok := FromServerContext(ctx)
+
 	if !ok {
 		t.Errorf("expected:%v got:%v", true, ok)
 	}
 	if tr == nil {
 		t.Errorf("expected:%v got:%v", nil, tr)
 	}
+
 	mtr, ok := tr.(*mockTransport)
+
 	if !ok {
 		t.Errorf("expected:%v got:%v", true, ok)
 	}
 	if mtr == nil {
 		t.Fatalf("expected:%v got:%v", nil, mtr)
 	}
+
 	if mtr.Kind().String() != KindGRPC.String() {
 		t.Errorf("expected:%v got:%v", KindGRPC.String(), mtr.Kind().String())
 	}
+
 	if !reflect.DeepEqual(mtr.endpoint, "test_endpoint") {
 		t.Errorf("expected:%v got:%v", "test_endpoint", mtr.endpoint)
 	}
+
 }
 
 func TestClientTransport(t *testing.T) {
+
 	ctx := context.Background()
 
 	ctx = NewClientContext(ctx, &mockTransport{endpoint: "test_endpoint"})
+
 	tr, ok := FromClientContext(ctx)
+
 	if !ok {
 		t.Errorf("expected:%v got:%v", true, ok)
 	}
 	if tr == nil {
 		t.Errorf("expected:%v got:%v", nil, tr)
 	}
+
 	mtr, ok := tr.(*mockTransport)
+
 	if !ok {
 		t.Errorf("expected:%v got:%v", true, ok)
 	}
+
 	if mtr == nil {
 		t.Errorf("expected:%v got:%v", nil, mtr)
 	}
+
 	if !reflect.DeepEqual(mtr.endpoint, "test_endpoint") {
 		t.Errorf("expected:%v got:%v", "test_endpoint", mtr.endpoint)
 	}
+
 }

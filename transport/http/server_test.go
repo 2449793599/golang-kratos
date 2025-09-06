@@ -247,113 +247,175 @@ func testClient(t *testing.T, srv *Server) {
 }
 
 func BenchmarkServer(b *testing.B) {
+
 	fn := func(w http.ResponseWriter, r *http.Request) {
+
 		data := &testData{Path: r.RequestURI}
+
 		_ = json.NewEncoder(w).Encode(data)
+
 		if r.Context().Value(testKey{}) != "test" {
 			w.WriteHeader(500)
 		}
+
 	}
+
 	ctx := context.Background()
+
 	ctx = context.WithValue(ctx, testKey{}, "test")
+
 	srv := NewServer()
+
 	srv.HandleFunc("/index", fn)
+
 	go func() {
 		if err := srv.Start(ctx); err != nil {
 			panic(err)
 		}
 	}()
+
 	time.Sleep(time.Second)
+
 	port, ok := host.Port(srv.lis)
+
 	if !ok {
 		b.Errorf("expected port got %v", srv.lis)
 	}
+
 	client, err := NewClient(context.Background(), WithEndpoint(fmt.Sprintf("127.0.0.1:%d", port)))
+
 	if err != nil {
 		b.Errorf("expected nil got %v", err)
 	}
 
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
+
 		var res testData
+
 		err := client.Invoke(context.Background(), http.MethodPost, "/index", nil, &res)
+
 		if err != nil {
 			b.Errorf("expected nil got %v", err)
 		}
+
 	}
+
 	_ = srv.Stop(ctx)
+
 }
 
 func TestNetwork(t *testing.T) {
+
 	o := &Server{}
+
 	v := "abc"
+
 	Network(v)(o)
+
 	if !reflect.DeepEqual(v, o.network) {
 		t.Errorf("expected %v got %v", v, o.network)
 	}
+
 }
 
 func TestAddress(t *testing.T) {
+
 	o := &Server{}
+
 	v := "abc"
+
 	Address(v)(o)
+
 	if !reflect.DeepEqual(v, o.address) {
 		t.Errorf("expected %v got %v", v, o.address)
 	}
+
 }
 
 func TestTimeout(t *testing.T) {
+
 	o := &Server{}
+
 	v := time.Duration(123)
+
 	Timeout(v)(o)
+
 	if !reflect.DeepEqual(v, o.timeout) {
 		t.Errorf("expected %v got %v", v, o.timeout)
 	}
+
 }
 
 func TestRequestDecoder(t *testing.T) {
+
 	o := &Server{}
+
 	v := func(*http.Request, any) error { return nil }
+
 	RequestDecoder(v)(o)
+
 	if o.decBody == nil {
 		t.Errorf("expected nil got %v", o.decBody)
 	}
+
 }
 
 func TestResponseEncoder(t *testing.T) {
+
 	o := &Server{}
+
 	v := func(http.ResponseWriter, *http.Request, any) error { return nil }
+
 	ResponseEncoder(v)(o)
+
 	if o.enc == nil {
 		t.Errorf("expected nil got %v", o.enc)
 	}
+
 }
 
 func TestErrorEncoder(t *testing.T) {
+
 	o := &Server{}
+
 	v := func(http.ResponseWriter, *http.Request, error) {}
+
 	ErrorEncoder(v)(o)
+
 	if o.ene == nil {
 		t.Errorf("expected nil got %v", o.ene)
 	}
+
 }
 
 func TestTLSConfig(t *testing.T) {
+
 	o := &Server{}
+
 	v := &tls.Config{}
+
 	TLSConfig(v)(o)
+
 	if !reflect.DeepEqual(v, o.tlsConf) {
 		t.Errorf("expected %v got %v", v, o.tlsConf)
 	}
+
 }
 
 func TestStrictSlash(t *testing.T) {
+
 	o := &Server{}
+
 	v := true
+
 	StrictSlash(v)(o)
+
 	if !reflect.DeepEqual(v, o.strictSlash) {
 		t.Errorf("expected %v got %v", v, o.tlsConf)
 	}
+
 }
 
 func TestListener(t *testing.T) {
