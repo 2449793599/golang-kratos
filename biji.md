@@ -1,3 +1,10 @@
+# 笔记
+
+源码基于KRATOS2.8.4版本
+
+提交：f7f150c3f1395d9e7b10c808488b8334a42563ed
+
+
 # KRATOS脚手架
 
 脚手架命令：cmd/kratos/main.go
