@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// *********************************************************************************************************************
 // mockTransport is a gRPC transport.
 type mockTransport struct {
 	endpoint  string
@@ -37,6 +38,7 @@ func (tr *mockTransport) ReplyHeader() Header {
 	return nil
 }
 
+// *********************************************************************************************************************
 func TestServerTransport(t *testing.T) {
 
 	ctx := context.Background()

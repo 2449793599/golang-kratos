@@ -171,7 +171,7 @@ type Server struct { // HTTP服务器
 	err         error
 	network     string
 	address     string
-	timeout     time.Duration
+	timeout     time.Duration // 超时时间
 	filters     []FilterFunc
 	middleware  matcher.Matcher
 	decVars     DecodeRequestFunc
@@ -324,8 +324,11 @@ func (s *Server) filter() mux.MiddlewareFunc {
 			pathTemplate := req.URL.Path
 
 			if route := mux.CurrentRoute(req); route != nil {
+
 				// /path/123 -> /path/{id}
+
 				pathTemplate, _ = route.GetPathTemplate()
+
 			}
 
 			tr := &Transport{

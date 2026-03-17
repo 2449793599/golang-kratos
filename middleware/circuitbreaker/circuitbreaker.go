@@ -42,33 +42,51 @@ type options struct {
 // Client circuitbreaker middleware will return errBreakerTriggered when the circuit
 // breaker is triggered and the request is rejected directly.
 func Client(opts ...Option) middleware.Middleware {
+
 	opt := &options{
 		group: group.NewGroup(func() circuitbreaker.CircuitBreaker {
 			return sre.NewBreaker()
 		}),
 	}
+
 	for _, o := range opts {
 		o(opt)
 	}
+
 	return func(handler middleware.Handler) middleware.Handler {
+
 		return func(ctx context.Context, req any) (any, error) {
-			info, _ := transport.FromClientContext(ctx)
+
+			info, _ := transport.FromClientContext(ctx) // clientTransportKey
+
 			breaker := opt.group.Get(info.Operation())
+
 			if err := breaker.Allow(); err != nil {
+
 				// rejected
+
 				// NOTE: when client reject requests locally,
 				// continue to add counter let the drop ratio higher.
+
 				breaker.MarkFailed()
+
 				return nil, ErrNotAllowed
+
 			}
+
 			// allowed
 			reply, err := handler(ctx, req)
+
 			if err != nil && (errors.IsInternalServer(err) || errors.IsServiceUnavailable(err) || errors.IsGatewayTimeout(err)) {
 				breaker.MarkFailed()
 			} else {
 				breaker.MarkSuccess()
 			}
+
 			return reply, err
+
 		}
+
 	}
+
 }
